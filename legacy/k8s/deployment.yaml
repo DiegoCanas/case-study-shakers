@@ -28,10 +28,16 @@ spec:
                   key: DATABASE_URL
           livenessProbe:
             httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
               path: /ready
               port: 3000
-            initialDelaySeconds: 1
-            periodSeconds: 5
+            initialDelaySeconds: 6
+            periodSeconds: 6
           resources:
             requests:
               cpu: "100m"
