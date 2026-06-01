@@ -22,7 +22,10 @@ spec:
             - name: NODE_ENV
               value: "production"
             - name: DATABASE_URL
-              value: "postgresql://admin:supersecret123@prod-db.cluster-xyz.eu-west-1.rds.amazonaws.com:5432/projects"
+              valueFrom:
+                secretKeyRef:
+                  name: database-url-secret
+                  key: DATABASE_URL
           livenessProbe:
             httpGet:
               path: /ready
