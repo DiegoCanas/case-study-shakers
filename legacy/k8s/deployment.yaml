@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: projects-api
+  namespace: production
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: projects-api
+  template:
+    metadata:
+      labels:
+        app: projects-api
+    spec:
+      containers:
+        - name: projects-api
+          image: 123456789.dkr.ecr.eu-west-1.amazonaws.com/projects-api:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: DATABASE_URL
+              value: "postgresql://admin:supersecret123@prod-db.cluster-xyz.eu-west-1.rds.amazonaws.com:5432/projects"
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: 3000
+            initialDelaySeconds: 1
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: projects-api
+  namespace: production
+spec:
+  type: NodePort
+  selector:
+    app: projects-api
+  ports:
+    - port: 80
+      targetPort: 3000

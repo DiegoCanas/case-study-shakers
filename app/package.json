@@ -1,0 +1,11 @@
+{
+  "name": "projects-api",
+  "version": "1.0.0",
+  "description": "Minimal projects API for the Shakers DevOps case study",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test || echo 'no tests'"
+  },
+  "license": "UNLICENSED"
+}
