@@ -15,4 +15,5 @@
 
 ### Terraform
 
-1. 
+1. Se podría modularizar el repositorio para hacerlo mantenible y escalable con el tiempo. Es una mejora, no algo crítico.
+2. Se podría configurar un backend remoto con state locking. En el contexto actual no es crítico.
