@@ -16,7 +16,19 @@ Se decide usar este stack puesto que se simplifica el entorno local y puedo iter
 
 ## Punto 3 - Dashboards:
 
+Se han creado dos dashboards, el primero on-call con las golden signals, en caso del dashboard de producto es donde se añade la métrica de negocio que hemos especificado antes. Las dos se han probado con el archivo de carga `load.sh`
 
+---
+
+## Dashboard operativo (on-call)
+
+![Dashboard operativo](misc/on-call-response.png)
+
+---
+
+## Dashboard producto / engineering
+
+![Dashboard producto](misc/product-response.png)
 
 ## Punto 4 - Runbooks:
 
@@ -39,3 +51,17 @@ Se decide usar este stack puesto que se simplifica el entorno local y puedo iter
 
 
 ## Punto Extra - SLIs y SLOs
+
+### SLIs
+
+1. Disponibilidad (Availability): Proporción de requests exitosas sobre el total.
+2. Latencia: Tiempo de respuesta de las peticiones, SLI = porcentaje de requests con latencia < 300ms (p95)
+3. Tasa de errores (Error Rate): Proporción de requests fallidas, SLI = 1 - (requests 5xx / total requests)
+4. Saturación (Load / Capacity): Nivel de presión sobre el sistema, SLI = uso de CPU del contenedor + número de requests concurrentes activos
+
+### SLOs
+
+1. Disponibilidad: 99.5% de requests exitosas mensualmente
+2. Latencia: 95% de requests con latencia < 300ms (p95)
+3. Errores: < 0.5% de requests en estado 5xx
+4. Saturación: CPU < 70% sostenido en el 95% del tiempo
