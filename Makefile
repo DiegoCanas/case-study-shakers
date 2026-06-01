@@ -1,5 +1,5 @@
 APP_NAME=projects-api
-IMAGE=projects-api:v1
+IMAGE=projects-api:1.0.0
 CLUSTER-NAME=shakers-project
 
 build:
