@@ -6,10 +6,10 @@ Este es el readme de referencia donde voy a explicar donde se encuentra lo refer
 
 Todo lo referente a la parte A se encuentra en la rama `ejercicio-a`
 Incluye:
-    - README
-    - Dockerfile
-    - Manifiestos
-    - Makefile para facilidad de arranque
+- README
+- Dockerfile
+- Manifiestos
+- Makefile para facilidad de arranque
 
 ## Parte B:
 
@@ -19,9 +19,9 @@ Enlace a la PR para el ejercicio B: https://github.com/DiegoCanas/case-study-sha
 
 Todo lo referente a la parte C se encuentra en la rama `ejercicio-c`
 Incluye:
-    - Imagenes de los dashboards
-    - Config del stack y alertas
-    - README
+- Imagenes de los dashboards
+- Config del stack y alertas
+- README
 
 ## Parte D:
 
@@ -31,5 +31,5 @@ ADR.md incluido en esta misma rama master para facilitar la busqueda del mismo
 
 Todo lo referente a esta parte se ubica en la carpeta pipelines de esta rama master
 Incluye: 
-    - Pipelines
-    - README con una breve explicación del ejercicio.
+- Pipelines
+- README con una breve explicación del ejercicio.
