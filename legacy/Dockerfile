@@ -4,9 +4,11 @@ WORKDIR /app
 
 RUN useradd -m user
 
-COPY . .
+COPY package.json ./
 
 RUN npm install
+
+COPY . .
 
 USER user
 
