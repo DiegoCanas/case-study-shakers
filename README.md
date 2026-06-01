@@ -15,8 +15,8 @@
 
     2.4. Si usas kind, continua con la documentación base, se ha testeado en base a kind
 
-
-Ejecutar desde la raíz del repositorio.
+3. Movernos de rama `git switch ejercicio-a`
+4. Ejecutar desde la raíz del repositorio.
 
 ```bash
 kubectl create namespace production-shakers
@@ -26,6 +26,10 @@ make deploy
 kubectl get pods -n production-shakers
 kubectl get svc -n production-shakers
 kubectl get hpa -n production-shakers
+```
+
+Esperar a que los pods esten levantados
+```bash
 make port-forward
 curl http://localhost:3000/healthz
 curl http://localhost:3000/ready
