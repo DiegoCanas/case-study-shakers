@@ -52,7 +52,7 @@ metadata:
   name: projects-api
   namespace: production
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: projects-api
   ports:
