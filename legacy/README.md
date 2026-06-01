@@ -11,3 +11,8 @@
 
 ### Deployment
 1. Aunque eliminamos los secretos hardcodeados del manifiesto, es importante mejorarlo usando AWS Secrets Manager o un Vault en vez de los secrets de kubernetes para mayor seguridad.
+
+
+### Terraform
+
+1. 
