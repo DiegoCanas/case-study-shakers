@@ -18,7 +18,7 @@ resource "aws_db_instance" "projects" {
   allocated_storage   = 20
   username            = "admin"
   password            = var.db_password
-  publicly_accessible = true
+  publicly_accessible = false
   skip_final_snapshot = true
 }
 
