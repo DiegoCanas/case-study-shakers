@@ -1,16 +1,48 @@
 const http = require('http');
 const { randomUUID } = require('crypto');
+const client = require('prom-client');
 
 const PORT = process.env.PORT || 3000;
 const APP_VERSION = process.env.APP_VERSION || '1.0.0';
 
-// In-memory store. No external DB needed to run the challenge.
+const register = new client.Registry();
+
+client.collectDefaultMetrics({ register });
+
+const httpRequestsTotal = new client.Counter({
+  name: 'http_requests_total',
+  help: 'Total HTTP requests',
+  labelNames: ['method', 'route', 'status']
+});
+
+const httpRequestDuration = new client.Histogram({
+  name: 'http_request_duration_seconds',
+  help: 'HTTP request duration',
+  labelNames: ['method', 'route', 'status'],
+  buckets: [0.01, 0.05, 0.1, 0.2, 0.5, 1]
+});
+
+const activeRequests = new client.Gauge({
+  name: 'http_active_requests',
+  help: 'Active HTTP requests'
+});
+
+const endpointRequests = new client.Counter({
+  name: 'api_endpoint_requests_total',
+  help: 'Requests by endpoint',
+  labelNames: ['endpoint']
+});
+
+register.registerMetric(httpRequestsTotal);
+register.registerMetric(httpRequestDuration);
+register.registerMetric(activeRequests);
+register.registerMetric(endpointRequests);
+
 const projects = new Map();
 
-// App starts "cold" and needs a few seconds before it can serve traffic.
-// (Simulates warming up connection pools, caches, etc.)
 let ready = false;
 const WARMUP_MS = Number(process.env.WARMUP_MS || 6000);
+
 setTimeout(() => {
   ready = true;
   console.log('projects-api is ready to serve traffic');
@@ -26,13 +58,24 @@ function notFound(res) {
   sendJson(res, 404, { error: 'not_found' });
 }
 
-// Simulated variable latency on the create path, plus an occasional failure.
-// This gives the observability dashboards something interesting to show.
+function readBody(req) {
+  return new Promise((resolve) => {
+    let data = '';
+    req.on('data', (chunk) => (data += chunk));
+    req.on('end', () => {
+      try {
+        resolve(data ? JSON.parse(data) : {});
+      } catch {
+        resolve(null);
+      }
+    });
+  });
+}
+
 function simulateWork() {
   return new Promise((resolve, reject) => {
-    const delay = 20 + Math.floor(Math.random() * 180); // 20-200ms
+    const delay = 20 + Math.floor(Math.random() * 180);
     setTimeout(() => {
-      // ~3% of create requests fail, to populate error metrics.
       if (Math.random() < 0.03) {
         reject(new Error('downstream_unavailable'));
       } else {
@@ -42,24 +85,37 @@ function simulateWork() {
   });
 }
 
-function readBody(req) {
-  return new Promise((resolve) => {
-    let data = '';
-    req.on('data', (chunk) => (data += chunk));
-    req.on('end', () => {
-      try {
-        resolve(data ? JSON.parse(data) : {});
-      } catch (e) {
-        resolve(null);
-      }
-    });
-  });
-}
-
 const server = http.createServer(async (req, res) => {
+  const start = process.hrtime();
   const { method, url } = req;
 
-  // --- Health endpoints (do NOT remove: deployment probes may use these) ---
+  activeRequests.inc();
+
+  res.on('finish', () => {
+    const diff = process.hrtime(start);
+    const duration = diff[0] + diff[1] / 1e9;
+
+    httpRequestsTotal.inc({
+      method,
+      route: url,
+      status: res.statusCode
+    });
+
+    httpRequestDuration.observe(
+      { method, route: url, status: res.statusCode },
+      duration
+    );
+
+    endpointRequests.inc({ endpoint: url });
+
+    activeRequests.dec();
+  });
+
+  if (url === '/metrics' && method === 'GET') {
+    res.writeHead(200, { 'Content-Type': register.contentType });
+    return res.end(await register.metrics());
+  }
+
   if (url === '/healthz' && method === 'GET') {
     return sendJson(res, 200, { status: 'ok', version: APP_VERSION });
   }
@@ -69,7 +125,6 @@ const server = http.createServer(async (req, res) => {
     return sendJson(res, 503, { status: 'warming_up' });
   }
 
-  // --- Business endpoints ---
   if (url === '/projects' && method === 'GET') {
     return sendJson(res, 200, { projects: Array.from(projects.values()) });
   }
@@ -79,13 +134,22 @@ const server = http.createServer(async (req, res) => {
     if (!body || !body.name) {
       return sendJson(res, 400, { error: 'name_required' });
     }
+
     try {
       await simulateWork();
+
       const id = randomUUID();
-      const project = { id, name: body.name, status: 'open', createdAt: new Date().toISOString() };
+      const project = {
+        id,
+        name: body.name,
+        status: 'open',
+        createdAt: new Date().toISOString()
+      };
+
       projects.set(id, project);
+
       return sendJson(res, 201, project);
-    } catch (e) {
+    } catch {
       return sendJson(res, 503, { error: 'could_not_create_project' });
     }
   }
@@ -98,7 +162,10 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (url === '/' && method === 'GET') {
-    return sendJson(res, 200, { service: 'projects-api', version: APP_VERSION });
+    return sendJson(res, 200, {
+      service: 'projects-api',
+      version: APP_VERSION
+    });
   }
 
   return notFound(res);
@@ -108,7 +175,6 @@ server.listen(PORT, () => {
   console.log(`projects-api listening on :${PORT} (version ${APP_VERSION})`);
 });
 
-// Graceful shutdown.
 process.on('SIGTERM', () => {
   console.log('SIGTERM received, shutting down');
   server.close(() => process.exit(0));
