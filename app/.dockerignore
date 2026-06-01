@@ -1,0 +1,9 @@
+.git
+.github
+
+README.md
+ADR.md
+
+.vscode
+.idea
+.DS_Store
