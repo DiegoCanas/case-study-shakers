@@ -1,10 +1,16 @@
-FROM node:latest
+FROM node:22-bookworm-slim
 
 WORKDIR /app
 
-COPY . .
+RUN useradd -m user
+
+COPY package.json ./
 
 RUN npm install
+
+COPY . .
+
+USER user
 
 EXPOSE 3000
 

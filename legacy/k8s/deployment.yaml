@@ -15,27 +15,36 @@ spec:
     spec:
       containers:
         - name: projects-api
-          image: 123456789.dkr.ecr.eu-west-1.amazonaws.com/projects-api:latest
+          image: 123456789.dkr.ecr.eu-west-1.amazonaws.com/projects-api:1.0.0
           ports:
             - containerPort: 3000
           env:
             - name: NODE_ENV
               value: "production"
             - name: DATABASE_URL
-              value: "postgresql://admin:supersecret123@prod-db.cluster-xyz.eu-west-1.rds.amazonaws.com:5432/projects"
+              valueFrom:
+                secretKeyRef:
+                  name: database-url-secret
+                  key: DATABASE_URL
           livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
             httpGet:
               path: /ready
               port: 3000
-            initialDelaySeconds: 1
-            periodSeconds: 5
+            initialDelaySeconds: 6
+            periodSeconds: 6
           resources:
             requests:
-              cpu: "100m"
+              cpu: "200m"
               memory: "128Mi"
             limits:
-              cpu: "100m"
-              memory: "128Mi"
+              cpu: "500m"
+              memory: "256Mi"
 ---
 apiVersion: v1
 kind: Service
@@ -43,7 +52,7 @@ metadata:
   name: projects-api
   namespace: production
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: projects-api
   ports:

@@ -17,8 +17,8 @@ resource "aws_db_instance" "projects" {
   instance_class      = "db.t3.medium"
   allocated_storage   = 20
   username            = "admin"
-  password            = "supersecret123"
-  publicly_accessible = true
+  password            = var.db_password
+  publicly_accessible = false
   skip_final_snapshot = true
 }
 
@@ -30,7 +30,7 @@ resource "aws_security_group" "projects_db" {
     from_port   = 5432
     to_port     = 5432
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["10.0.0.0/16"]
   }
 
   egress {
@@ -43,4 +43,30 @@ resource "aws_security_group" "projects_db" {
 
 resource "aws_s3_bucket" "uploads" {
   bucket = "shakers-projects-uploads"
+}
+
+resource "aws_s3_bucket_versioning" "uploads" {
+  bucket = aws_s3_bucket.uploads.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "uploads" {
+  bucket = aws_s3_bucket.uploads.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "uploads" {
+  bucket = aws_s3_bucket.uploads.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
 }
